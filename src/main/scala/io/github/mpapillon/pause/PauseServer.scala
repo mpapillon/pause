@@ -3,16 +3,17 @@ package io.github.mpapillon.pause
 import java.util.concurrent.Executors.newCachedThreadPool
 
 import cats.effect._
-import cats.implicits._
+import cats.syntax.flatMap._
+import cats.syntax.functor._
 import doobie.hikari.HikariTransactor
 import doobie.util.ExecutionContexts
 import fs2.Stream
 import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import io.github.mpapillon.pause.domains.jokes.{Jokes, JokesRoutes}
-import io.github.mpapillon.pause.domains.members.{Members, MembersRoutes, MembersService}
+import io.github.mpapillon.pause.domains.members.{Members, MembersRoutes}
+import io.github.mpapillon.pause.domains.teams.{Teams, TeamsRoutes}
 import io.github.mpapillon.pause.repositories.{MembersRepository, TeamsRepository}
-import io.github.mpapillon.pause.domains.teams.{Teams, TeamsRoutes, TeamsService}
 import org.flywaydb.core.Flyway
 import org.http4s.client.blaze.BlazeClientBuilder
 import org.http4s.dsl.Http4sDsl
@@ -37,7 +38,7 @@ object PauseServer {
              dbConf.user,
              dbConf.password,
              ce, // await connection here
-             te // execute JDBC operations here
+             te  // execute JDBC operations here
            )
     } yield xa
 
@@ -63,18 +64,18 @@ object PauseServer {
       xa     <- Stream.resource(transactor(conf.db))
       _      <- Stream.eval(migrate(xa))
 
-      membersRepo = MembersRepository.impl
-      teamRepo    = TeamsRepository.impl
+      membersRepo = MembersRepository.impl(xa)
+      teamRepo    = TeamsRepository.impl(xa)
 
-      implicit0(membersAlg: Members[F]) = MembersService.impl[F](membersRepo, xa)
-      implicit0(teamsAlg: Teams[F])     = TeamsService.impl[F](teamRepo, membersRepo, xa)
-      implicit0(jokeAlg: Jokes[F])      = Jokes.impl[F](client)
+      membersAlg = Members.impl[F](membersRepo)
+      teamsAlg   = Teams.impl[F](teamRepo, membersRepo)
+      jokeAlg    = Jokes.impl[F](client)
 
       httpApp = Router(
         "/api/v1" -> Router(
-          "/members" -> MembersRoutes.routes,
-          "/teams"   -> TeamsRoutes.routes,
-          "/joke"    -> JokesRoutes.routes
+          "/members" -> MembersRoutes(membersAlg),
+          "/teams"   -> TeamsRoutes(teamsAlg),
+          "/joke"    -> JokesRoutes(jokeAlg)
         )
       ).orNotFound
 

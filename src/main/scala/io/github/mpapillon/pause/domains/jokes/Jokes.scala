@@ -2,13 +2,14 @@ package io.github.mpapillon.pause.domains.jokes
 
 import cats.Applicative
 import cats.effect.Sync
+import cats.syntax.monadError._
 import io.circe.generic.semiauto._
 import io.circe.{Decoder, Encoder}
 import org.http4s.Method._
+import org.http4s._
 import org.http4s.circe._
 import org.http4s.client.Client
 import org.http4s.client.dsl.Http4sClientDsl
-import org.http4s.{EntityDecoder, EntityEncoder, _}
 
 trait Jokes[F[_]] {
 
@@ -16,9 +17,6 @@ trait Jokes[F[_]] {
 }
 
 object Jokes {
-  import cats.implicits._
-
-  def apply[F[_]](implicit ev: Jokes[F]): Jokes[F] = ev
 
   final case class Joke(joke: String) extends AnyVal
 

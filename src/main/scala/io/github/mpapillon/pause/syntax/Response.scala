@@ -32,5 +32,3 @@ trait ToResponseOps {
   implicit def toEitherTResponseOps[F[_]: Sync, E, A](ma: EitherT[F, E, A]): EitherTResponseOps[F, E, A] =
     new EitherTResponseOps(ma)
 }
-
-object response extends ToResponseOps

@@ -9,7 +9,6 @@ import io.chrisdavenport.fuuid.FUUID
 import io.chrisdavenport.fuuid.http4s.FUUIDVar
 import io.circe._
 import io.circe.syntax._
-import io.github.mpapillon.pause.domains.members.Members
 import io.github.mpapillon.pause.model.Team
 import io.github.mpapillon.pause.syntax.response._
 import org.http4s.circe._
@@ -24,7 +23,7 @@ object TeamsRoutes {
   private[this] implicit val teamCreationDecoder: Decoder[TeamCreation]                            = deriveDecoder
   private[this] implicit def teamCreationEntityDecoder[F[_]: Sync]: EntityDecoder[F, TeamCreation] = jsonOf
 
-  def routes[F[_]: Sync: Teams: Members](implicit dsl: Http4sDsl[F]): HttpRoutes[F] = {
+  def apply[F[_]: Sync](teams: Teams[F])(implicit dsl: Http4sDsl[F]): HttpRoutes[F] = {
     import dsl._
 
     implicit val handleErrors: TeamsError => F[Response[F]] = {
@@ -43,7 +42,7 @@ object TeamsRoutes {
     HttpRoutes.of[F] {
       case GET -> Root =>
         for {
-          teams <- Teams[F].all
+          teams <- teams.all
           resp  <- Ok(teams.asJson)
         } yield resp
 
@@ -53,25 +52,25 @@ object TeamsRoutes {
 
           id   <- FUUID.randomFUUID
           team = Team(id, name, cName, LocalDate.now())
-          resp <- Teams[F].add(team).toResponse(_ => Created(team.asJson))
+          resp <- teams.add(team).toResponse(_ => Created(team.asJson))
         } yield resp
 
       case GET -> Root / name =>
-        OptionT(Teams[F].get(name))
+        OptionT(teams.get(name))
           .toRight(TeamsError.TeamNotFound(name))
           .toResponse(team => Ok(team.asJson))
 
       case GET -> Root / name / "members" =>
-        Teams[F].membersOf(name).toResponse(members => Ok(members.asJson))
+        teams.membersOf(name).toResponse(members => Ok(members.asJson))
 
       case PUT -> Root / name / "members" / FUUIDVar(memberID) =>
-        Teams[F].join(name, memberID).toResponse(_ => Created())
+        teams.join(name, memberID).toResponse(_ => Created())
 
       case DELETE -> Root / name / "members" / FUUIDVar(memberID) =>
-        Teams[F].leave(name, memberID).toResponse(_ => Ok())
+        teams.leave(name, memberID).toResponse(_ => Ok())
 
       case GET -> Root / name / "managers" =>
-        Teams[F].managersOf(name).toResponse(managers => Ok(managers.asJson))
+        teams.managersOf(name).toResponse(managers => Ok(managers.asJson))
     }
   }
 }
