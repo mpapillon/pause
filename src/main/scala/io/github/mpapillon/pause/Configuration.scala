@@ -12,5 +12,5 @@ object Configuration {
 
   final case class Database(host: Uri, user: String, password: String)
 
-  def load[F[_]: Sync]: F[Configuration] = loadConfigF[F, Configuration]
+  def load[F[_]: Sync](): F[Configuration] = loadConfigF[F, Configuration]
 }
