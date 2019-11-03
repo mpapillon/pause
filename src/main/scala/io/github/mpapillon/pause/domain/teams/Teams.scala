@@ -2,7 +2,10 @@ package io.github.mpapillon.pause.domain.teams
 
 import cats.Monad
 import cats.data.{EitherT, OptionT}
-import cats.implicits._
+import cats.syntax.either._
+import cats.syntax.flatMap._
+import cats.syntax.functor._
+import io.chrisdavenport.cats.effect.time.JavaTime
 import io.chrisdavenport.fuuid.FUUID
 import io.github.mpapillon.pause.domain.teams.TeamsError._
 import io.github.mpapillon.pause.model.{Person, Team}
@@ -11,7 +14,7 @@ import io.github.mpapillon.pause.repository.{MembersRepository, RepositoryError,
 trait Teams[F[_]] {
 
   def all: F[Vector[Team]]
-  def add(team: Team): F[Either[TeamsError, Unit]]
+  def add(name: String, canonicalName: String): F[Either[TeamsError, Team]]
   def get(canonicalName: String): F[Option[Team]]
   def membersOf(canonicalName: String): F[Either[TeamsError, Vector[Person.Member]]]
   def managersOf(canonicalName: String): F[Either[TeamsError, Vector[Person.Manager]]]
@@ -21,19 +24,22 @@ trait Teams[F[_]] {
 
 object Teams {
 
-  def impl[F[_]: Monad](
+  def impl[F[_]: Monad: JavaTime](
       teamsRepo: TeamsRepository[F],
-      membersRepo: MembersRepository[F],
+      membersRepo: MembersRepository[F]
   ): Teams[F] = new Teams[F] {
 
     override def all: F[Vector[Team]] =
       teamsRepo.findAll()
 
-    override def add(team: Team): F[Either[TeamsError, Unit]] =
-      EitherT(teamsRepo.insert(team)).leftMap {
-        case RepositoryError.UniqueViolationConstraintError =>
-          TeamAlreadyExists(team.canonicalName)
-      }.as(()).leftWiden[TeamsError].value
+    override def add(name: String, canonicalName: String): F[Either[TeamsError, Team]] =
+      for {
+        creationDate <- JavaTime[F].getLocalDateUTC
+        teamId       <- teamsRepo.insert(name, canonicalName, creationDate)
+        team         = teamId.map(Team(_, name, canonicalName, creationDate))
+      } yield team.leftMap {
+        case RepositoryError.UniqueViolationConstraintError => TeamAlreadyExists(canonicalName)
+      }
 
     override def get(canonicalName: String): F[Option[Team]] =
       teamsRepo.findByName(canonicalName)
@@ -56,10 +62,10 @@ object Teams {
       for {
         team <- OptionT(teamsRepo.findByName(canonicalName)).toRight(TeamNotFound(canonicalName))
         _    <- OptionT(membersRepo.findById(memberID)).toRight(MemberNotFound(memberID))
-        _    <- EitherT(teamsRepo.insertMember(team.id, memberID)).leftMap[TeamsError] {
-                  case RepositoryError.UniqueViolationConstraintError =>
-                    MembershipAlreadyExists(canonicalName, memberID)
-                }
+        _ <- EitherT(teamsRepo.insertMember(team.id, memberID)).leftMap[TeamsError] {
+              case RepositoryError.UniqueViolationConstraintError =>
+                MembershipAlreadyExists(canonicalName, memberID)
+            }
       } yield ()
     }.value
 
@@ -67,9 +73,9 @@ object Teams {
       for {
         team <- OptionT(teamsRepo.findByName(canonicalName)).toRight(TeamNotFound(canonicalName))
         _    <- OptionT(membersRepo.findById(memberID)).toRight(MemberNotFound(memberID))
-        _    <- EitherT
-                 .right[TeamsError](teamsRepo.deleteMember(team.id, memberID))
-                 .subflatMap(nb => Either.cond(nb == 0, (), MembershipDoesNotExists(canonicalName, memberID)))
+        _ <- EitherT
+              .right[TeamsError](teamsRepo.deleteMember(team.id, memberID))
+              .subflatMap(nb => Either.cond(nb == 0, (), MembershipDoesNotExists(canonicalName, memberID)))
       } yield ()
     }.value
   }

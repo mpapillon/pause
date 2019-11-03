@@ -1,12 +1,9 @@
 package io.github.mpapillon.pause
 
-import java.util.UUID.randomUUID
-
 import cats.effect.{ContextShift, IO}
 import doobie.util.transactor.Transactor
 import doobie.util.transactor.Transactor.Aux
 import org.specs2.mutable.Specification
-import io.chrisdavenport.fuuid.FUUID
 import io.github.mpapillon.pause.repository.query.TeamsQueries._
 
 import scala.concurrent.ExecutionContext
@@ -24,8 +21,8 @@ class TeamsAnalysisTestSpec extends Specification with doobie.specs2.IOChecker {
 
   check(findAll)
   check(findByName("fake-team"))
-  check(findMembers(FUUID.fromUUID(randomUUID())))
-  check(findManagers(FUUID.fromUUID(randomUUID())))
+  check(findMembers(1))
+  check(findManagers(4))
   check(insertMembers)
   check(deleteMembers)
 }

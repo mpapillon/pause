@@ -1,24 +1,29 @@
 package io.github.mpapillon.pause.repository
 
+import java.time.LocalDate
+
 import cats.effect.Async
 import doobie.util.transactor.Transactor
 import io.chrisdavenport.fuuid.FUUID
 import io.github.mpapillon.pause.model.{Person, Team}
+import io.github.mpapillon.pause.repository.RepositoryError.{handleSqlState, Result}
+import io.github.mpapillon.pause.repository.TeamsRepository.TeamId
 import io.github.mpapillon.pause.repository.query.TeamsQueries
-import io.github.mpapillon.pause.repository.RepositoryError.handleSqlState
 
 trait TeamsRepository[F[_]] {
 
   def findAll(): F[Vector[Team]]
   def findByName(canonicalName: String): F[Option[Team]]
-  def findMembers(teamId: FUUID): F[Vector[Person.Member]]
-  def findManagers(teamId: FUUID): F[Vector[Person.Manager]]
-  def insert(team: Team): F[Either[RepositoryError, Int]]
-  def insertMember(teamId: FUUID, memberId: FUUID): F[Either[RepositoryError, Int]]
-  def deleteMember(teamId: FUUID, memberId: FUUID): F[Int]
+  def findMembers(teamId: TeamId): F[Vector[Person.Member]]
+  def findManagers(teamId: TeamId): F[Vector[Person.Manager]]
+  def insert(name: String, canonicalName: String, creationDate: LocalDate): F[Result[TeamId]]
+  def insertMember(teamId: TeamId, memberId: FUUID): F[Result[Int]]
+  def deleteMember(teamId: TeamId, memberId: FUUID): F[Int]
 }
 
 object TeamsRepository {
+
+  type TeamId = Int
 
   def impl[F[_]: Async](xa: Transactor[F]): TeamsRepository[F] = new TeamsRepository[F] {
     import doobie.implicits._
@@ -29,28 +34,32 @@ object TeamsRepository {
     override def findByName(canonicalName: String): F[Option[Team]] =
       TeamsQueries.findByName(canonicalName).option.transact(xa)
 
-    override def findMembers(teamId: FUUID): F[Vector[Person.Member]] =
+    override def findMembers(teamId: TeamId): F[Vector[Person.Member]] =
       TeamsQueries.findMembers(teamId).to[Vector].transact(xa)
 
-    override def findManagers(teamId: FUUID): F[Vector[Person.Manager]] =
+    override def findManagers(teamId: TeamId): F[Vector[Person.Manager]] =
       TeamsQueries.findManagers(teamId).to[Vector].transact(xa)
 
-    override def insert(team: Team): F[Either[RepositoryError, Int]] =
+    override def insert(
+        name: String,
+        canonicalName: String,
+        creationDate: LocalDate
+    ): F[Result[TeamId]] =
       TeamsQueries
-        .insert(team.id, team.name, team.canonicalName, team.creationDate)
-        .run
+        .insert(name, canonicalName, creationDate)
+        .withUniqueGeneratedKeys[TeamId]("team_id")
         .attemptSomeSqlState(handleSqlState)
         .transact(xa)
 
-    override def insertMember(teamId: FUUID, memberId: FUUID): F[Either[RepositoryError, Int]] =
+    override def insertMember(teamId: TeamId, memberId: FUUID): F[Result[Int]] =
       TeamsQueries.insertMembers
-        .toUpdate0((teamId, memberId))
+        .toUpdate0(teamId -> memberId)
         .run
         .attemptSomeSqlState(handleSqlState)
         .transact(xa)
 
-    override def deleteMember(teamId: FUUID, memberId: FUUID): F[Int] =
-      TeamsQueries.deleteMembers.toUpdate0((teamId, memberId)).run.transact(xa)
+    override def deleteMember(teamId: TeamId, memberId: FUUID): F[Int] =
+      TeamsQueries.deleteMembers.toUpdate0(teamId -> memberId).run.transact(xa)
   }
 
 }

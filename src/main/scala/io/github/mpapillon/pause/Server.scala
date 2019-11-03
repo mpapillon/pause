@@ -48,6 +48,7 @@ object Server extends IOApp {
 
       httpApp = HttpLogger.httpApp(logHeaders = true, logBody = true)(router)
       exitCode <- BlazeServerBuilder[IO]
+                   .withBanner(Nil)
                    .bindHttp(conf.port, "0.0.0.0")
                    .withHttpApp(httpApp)
                    .serve

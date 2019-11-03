@@ -7,6 +7,8 @@ sealed trait RepositoryError
 
 object RepositoryError {
 
+  type Result[A] = Either[RepositoryError, A]
+
   final case object UniqueViolationConstraintError extends RepositoryError
 
   def handleSqlState: PartialFunction[SqlState, RepositoryError] = {

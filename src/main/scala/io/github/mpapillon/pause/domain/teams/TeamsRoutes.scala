@@ -1,27 +1,27 @@
 package io.github.mpapillon.pause.domain.teams
 
-import java.time.LocalDate
-
 import cats.data.OptionT
 import cats.effect.Sync
 import cats.implicits._
-import io.chrisdavenport.fuuid.FUUID
 import io.chrisdavenport.fuuid.http4s.FUUIDVar
 import io.circe._
 import io.circe.syntax._
 import io.github.mpapillon.pause.model.Team
 import io.github.mpapillon.pause.syntax.response._
+import org.http4s._
+import org.http4s.circe.CirceEntityDecoder._
 import org.http4s.circe._
 import org.http4s.dsl.Http4sDsl
-import org.http4s.{EntityDecoder, HttpRoutes, Response}
 
 object TeamsRoutes {
-  import io.circe.generic.semiauto._
 
-  private[this] final case class TeamCreation(name: String, canonicalName: String)
+  private[this] type TeamCreation = (String, String)
 
-  private[this] implicit val teamCreationDecoder: Decoder[TeamCreation]                            = deriveDecoder
-  private[this] implicit def teamCreationEntityDecoder[F[_]: Sync]: EntityDecoder[F, TeamCreation] = jsonOf
+  private[this] implicit val teamCreationDecoder: Decoder[TeamCreation] =
+    Decoder.forProduct2("name", "canonicalName")((name: String, cName: String) => (name, cName))
+
+  private[this] implicit val teamDecoder: Encoder[Team] =
+    Encoder.forProduct3("name", "canonicalName", "creationDate")(t => (t.name, t.canonicalName, t.creationDate))
 
   def apply[F[_]: Sync](teams: Teams[F])(implicit dsl: Http4sDsl[F]): HttpRoutes[F] = {
     import dsl._
@@ -48,11 +48,8 @@ object TeamsRoutes {
 
       case req @ POST -> Root =>
         for {
-          TeamCreation(name, cName) <- req.as[TeamCreation]
-
-          id   <- FUUID.randomFUUID
-          team = Team(id, name, cName, LocalDate.now())
-          resp <- teams.add(team).toResponse(_ => Created(team.asJson))
+          (name, cName) <- req.as[TeamCreation]
+          resp          <- teams.add(name, cName).toResponse(t => Created(t.asJson))
         } yield resp
 
       case GET -> Root / name =>

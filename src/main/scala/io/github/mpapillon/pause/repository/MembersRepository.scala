@@ -4,13 +4,14 @@ import cats.effect.Async
 import doobie.util.transactor.Transactor
 import io.chrisdavenport.fuuid.FUUID
 import io.github.mpapillon.pause.model.Member
+import io.github.mpapillon.pause.repository.RepositoryError.Result
 import io.github.mpapillon.pause.repository.query.MembersQueries
 
 trait MembersRepository[F[_]] {
 
   def findAll(): F[Vector[Member]]
   def findById(memberID: FUUID): F[Option[Member]]
-  def insert(m: Member): F[Either[RepositoryError, Int]]
+  def insert(m: Member): F[Result[Int]]
   def delete(memberID: FUUID): F[Int]
 }
 
@@ -24,7 +25,7 @@ object MembersRepository {
     override def findById(memberID: FUUID): F[Option[Member]] =
       MembersQueries.findById(memberID).option.transact(xa)
 
-    override def insert(m: Member): F[Either[RepositoryError, Int]] =
+    override def insert(m: Member): F[Result[Int]] =
       MembersQueries
         .insert(m.id, m.firstName, m.lastName, m.email)
         .run
