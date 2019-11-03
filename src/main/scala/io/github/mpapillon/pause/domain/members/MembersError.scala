@@ -1,4 +1,4 @@
-package io.github.mpapillon.pause.domains.members
+package io.github.mpapillon.pause.domain.members
 
 import io.chrisdavenport.fuuid.FUUID
 

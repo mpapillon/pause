@@ -6,7 +6,7 @@ import cats.effect.{ContextShift, IO}
 import doobie.util.transactor.Transactor
 import doobie.util.transactor.Transactor.Aux
 import io.chrisdavenport.fuuid.FUUID
-import io.github.mpapillon.pause.queries.MembersQueries
+import io.github.mpapillon.pause.repository.query.MembersQueries
 import org.specs2.mutable.Specification
 
 import scala.concurrent.ExecutionContext

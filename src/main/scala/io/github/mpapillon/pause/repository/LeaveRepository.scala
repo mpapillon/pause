@@ -1,4 +1,4 @@
-package io.github.mpapillon.pause.repositories
+package io.github.mpapillon.pause.repository
 
 import io.github.mpapillon.pause.model.Leave
 

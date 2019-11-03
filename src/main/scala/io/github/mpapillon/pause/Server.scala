@@ -7,10 +7,10 @@ import cats.syntax.functor._
 import fs2.Stream
 import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
-import io.github.mpapillon.pause.domains.jokes.{Jokes, JokesRoutes}
-import io.github.mpapillon.pause.domains.members.{Members, MembersRoutes}
-import io.github.mpapillon.pause.domains.teams.{Teams, TeamsRoutes}
-import io.github.mpapillon.pause.repositories.{MembersRepository, TeamsRepository}
+import io.github.mpapillon.pause.domain.jokes.{Jokes, JokesRoutes}
+import io.github.mpapillon.pause.domain.members.{Members, MembersRoutes}
+import io.github.mpapillon.pause.domain.teams.{Teams, TeamsRoutes}
+import io.github.mpapillon.pause.repository.{MembersRepository, TeamsRepository}
 import org.http4s.client.blaze.BlazeClientBuilder
 import org.http4s.dsl.Http4sDsl
 import org.http4s.implicits._

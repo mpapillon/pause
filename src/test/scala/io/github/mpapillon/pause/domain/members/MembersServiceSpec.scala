@@ -1,11 +1,11 @@
-package io.github.mpapillon.pause.domains.members
+package io.github.mpapillon.pause.domain.members
 
 import java.util.UUID.randomUUID
 
 import cats.Id
 import io.chrisdavenport.fuuid.FUUID
 import io.github.mpapillon.pause.model.Member
-import io.github.mpapillon.pause.repositories.{MembersRepository, RepositoryError}
+import io.github.mpapillon.pause.repository.{MembersRepository, RepositoryError}
 import org.specs2.matcher.IOMatchers
 import org.specs2.mutable.Specification
 import org.specs2.mock.Mockito

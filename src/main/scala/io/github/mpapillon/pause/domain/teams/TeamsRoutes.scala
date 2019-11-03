@@ -1,4 +1,4 @@
-package io.github.mpapillon.pause.domains.teams
+package io.github.mpapillon.pause.domain.teams
 
 import java.time.LocalDate
 

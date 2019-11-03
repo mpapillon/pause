@@ -1,10 +1,10 @@
-package io.github.mpapillon.pause.repositories
+package io.github.mpapillon.pause.repository
 
 import cats.effect.Async
 import doobie.util.transactor.Transactor
 import io.chrisdavenport.fuuid.FUUID
 import io.github.mpapillon.pause.model.Member
-import io.github.mpapillon.pause.queries.MembersQueries
+import io.github.mpapillon.pause.repository.query.MembersQueries
 
 trait MembersRepository[F[_]] {
 

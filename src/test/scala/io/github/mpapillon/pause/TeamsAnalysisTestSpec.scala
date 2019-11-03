@@ -7,7 +7,7 @@ import doobie.util.transactor.Transactor
 import doobie.util.transactor.Transactor.Aux
 import org.specs2.mutable.Specification
 import io.chrisdavenport.fuuid.FUUID
-import io.github.mpapillon.pause.queries.TeamsQueries._
+import io.github.mpapillon.pause.repository.query.TeamsQueries._
 
 import scala.concurrent.ExecutionContext
 

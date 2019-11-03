@@ -1,15 +1,12 @@
-package io.github.mpapillon.pause.domains.teams
-
-import io.chrisdavenport.fuuid.FUUID
-import io.github.mpapillon.pause.model.{Person, Team}
+package io.github.mpapillon.pause.domain.teams
 
 import cats.Monad
 import cats.data.{EitherT, OptionT}
 import cats.implicits._
 import io.chrisdavenport.fuuid.FUUID
-import io.github.mpapillon.pause.domains.teams.TeamsError._
+import io.github.mpapillon.pause.domain.teams.TeamsError._
 import io.github.mpapillon.pause.model.{Person, Team}
-import io.github.mpapillon.pause.repositories.{MembersRepository, RepositoryError, TeamsRepository}
+import io.github.mpapillon.pause.repository.{MembersRepository, RepositoryError, TeamsRepository}
 
 trait Teams[F[_]] {
 
@@ -59,10 +56,10 @@ object Teams {
       for {
         team <- OptionT(teamsRepo.findByName(canonicalName)).toRight(TeamNotFound(canonicalName))
         _    <- OptionT(membersRepo.findById(memberID)).toRight(MemberNotFound(memberID))
-        _ <- EitherT(teamsRepo.insertMember(team.id, memberID)).leftMap[TeamsError] {
-              case RepositoryError.UniqueViolationConstraintError =>
-                MembershipAlreadyExists(canonicalName, memberID)
-            }
+        _    <- EitherT(teamsRepo.insertMember(team.id, memberID)).leftMap[TeamsError] {
+                  case RepositoryError.UniqueViolationConstraintError =>
+                    MembershipAlreadyExists(canonicalName, memberID)
+                }
       } yield ()
     }.value
 
@@ -70,9 +67,9 @@ object Teams {
       for {
         team <- OptionT(teamsRepo.findByName(canonicalName)).toRight(TeamNotFound(canonicalName))
         _    <- OptionT(membersRepo.findById(memberID)).toRight(MemberNotFound(memberID))
-        _ <- EitherT
-              .right[TeamsError](teamsRepo.deleteMember(team.id, memberID))
-              .subflatMap(nb => Either.cond(nb == 0, (), MembershipDoesNotExists(canonicalName, memberID)))
+        _    <- EitherT
+                 .right[TeamsError](teamsRepo.deleteMember(team.id, memberID))
+                 .subflatMap(nb => Either.cond(nb == 0, (), MembershipDoesNotExists(canonicalName, memberID)))
       } yield ()
     }.value
   }

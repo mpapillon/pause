@@ -1,11 +1,11 @@
-package io.github.mpapillon.pause.repositories
+package io.github.mpapillon.pause.repository
 
 import cats.effect.Async
 import doobie.util.transactor.Transactor
 import io.chrisdavenport.fuuid.FUUID
 import io.github.mpapillon.pause.model.{Person, Team}
-import io.github.mpapillon.pause.queries.TeamsQueries
-import io.github.mpapillon.pause.repositories.RepositoryError.handleSqlState
+import io.github.mpapillon.pause.repository.query.TeamsQueries
+import io.github.mpapillon.pause.repository.RepositoryError.handleSqlState
 
 trait TeamsRepository[F[_]] {
 

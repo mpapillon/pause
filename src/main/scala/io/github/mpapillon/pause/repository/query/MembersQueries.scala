@@ -1,4 +1,4 @@
-package io.github.mpapillon.pause.queries
+package io.github.mpapillon.pause.repository.query
 
 import io.chrisdavenport.fuuid.FUUID
 import io.github.mpapillon.pause.model.Member

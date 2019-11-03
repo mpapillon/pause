@@ -1,11 +1,11 @@
-package io.github.mpapillon.pause.domains.members
+package io.github.mpapillon.pause.domain.members
 
 import cats.Monad
 import cats.data.EitherT
 import cats.implicits._
 import io.chrisdavenport.fuuid.FUUID
 import io.github.mpapillon.pause.model.Member
-import io.github.mpapillon.pause.repositories.{MembersRepository, RepositoryError}
+import io.github.mpapillon.pause.repository.{MembersRepository, RepositoryError}
 
 trait Members[F[_]] {
 

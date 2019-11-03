@@ -1,4 +1,4 @@
-package io.github.mpapillon.pause.repositories
+package io.github.mpapillon.pause.repository
 
 import doobie.enum.SqlState
 import doobie.postgres.sqlstate.class23.UNIQUE_VIOLATION
