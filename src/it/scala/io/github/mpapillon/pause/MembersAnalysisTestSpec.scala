@@ -19,7 +19,7 @@ class MembersAnalysisTestSpec extends Specification with doobie.specs2.IOChecker
 
   override val transactor: Aux[IO, Unit] = Transactor.fromDriverManager[IO](
     "org.postgresql.Driver",
-    "jdbc:postgresql:team_wip",
+    "jdbc:postgresql:pause",
     "postgres",
     "",
   )

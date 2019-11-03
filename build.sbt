@@ -17,7 +17,9 @@ val flywayVersion           = "6.0.0"
 val log4catsVersion = "0.3.0"
 
 lazy val root = (project in file("."))
+  .configs(IntegrationTest)
   .settings(
+    Defaults.itSettings,
     organization := "io.github.mpapillon",
     name := "pause",
     version := "0.0.1-SNAPSHOT",
@@ -34,7 +36,7 @@ lazy val root = (project in file("."))
       "org.tpolecat"          %% "doobie-core"            % doobieVersion,
       "org.tpolecat"          %% "doobie-hikari"          % doobieVersion,
       "org.tpolecat"          %% "doobie-postgres"        % doobieVersion,
-      "org.tpolecat"          %% "doobie-specs2"          % doobieVersion % "test",
+      "org.tpolecat"          %% "doobie-specs2"          % doobieVersion % "it",
       "io.circe"              %% "circe-generic"          % circeVersion,
       "io.circe"              %% "circe-literal"          % circeVersion,
       "io.circe"              %% "circe-jawn"             % circeVersion,
@@ -51,7 +53,7 @@ lazy val root = (project in file("."))
       "com.github.pureconfig" %% "pureconfig-cats"        % pureconfigVersion,
       "com.github.pureconfig" %% "pureconfig-cats-effect" % pureconfigVersion,
       "io.chrisdavenport"     %% "log4cats-slf4j"         % log4catsVersion,
-      "org.specs2"            %% "specs2-core"            % specs2Version % "test",
+      "org.specs2"            %% "specs2-core"            % specs2Version % "it,test",
       "org.specs2"            %% "specs2-cats"            % specs2Version % "test",
       "org.specs2"            %% "specs2-mock"            % specs2Version % "test",
       "ch.qos.logback"        % "logback-classic"         % logbackVersion,
