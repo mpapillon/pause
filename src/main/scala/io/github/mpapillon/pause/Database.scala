@@ -42,11 +42,9 @@ object Database {
 
       override def migrate(): F[Int] =
         transactor.use(_.configure { ds =>
-          Sync[F].fromTry {
-            Try {
-              val flyWay = Flyway.configure().dataSource(ds).load()
-              flyWay.migrate()
-            }
+          Sync[F].delay {
+            val flyWay = Flyway.configure().dataSource(ds).load()
+            flyWay.migrate()
           }
         })
     }

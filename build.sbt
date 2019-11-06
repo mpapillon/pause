@@ -1,6 +1,6 @@
 val catsVersion             = "1.6.1"
 val catsEffectVersion       = "1.4.0"
-val catsEffectTimeVersion   = "0.1.0"
+val catsEffectTimeVersion   = "0.0.4"
 val fs2Version              = "1.0.5"
 val http4sVersion           = "0.20.11"
 val doobieVersion           = "0.7.1"
