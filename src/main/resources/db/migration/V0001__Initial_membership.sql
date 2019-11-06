@@ -10,7 +10,7 @@ CREATE TABLE team
 (
     team_id        serial PRIMARY KEY,
     name           character varying        NOT NULL,
-    name_canonical character varying UNIQUE NOT NULL,
+    slug           character varying UNIQUE NOT NULL,
     creation_date  date                     NOT NULL DEFAULT now()
 );
 

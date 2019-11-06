@@ -4,7 +4,7 @@ import java.time.LocalDate
 
 import doobie.util.Read
 import io.chrisdavenport.fuuid.FUUID
-import io.github.mpapillon.pause.model.{Person, Team}
+import io.github.mpapillon.pause.model.{Person, Slug, Team}
 
 object TeamsQueries {
   import doobie.implicits._
@@ -13,14 +13,14 @@ object TeamsQueries {
   import io.chrisdavenport.fuuid.doobie.implicits._
 
   val findAll: doobie.Query0[Team] =
-    sql"SELECT team_id, name, name_canonical, creation_date FROM team"
+    sql"SELECT team_id, name, slug, creation_date FROM team"
       .query[Team]
 
-  def insert(name: String, canonicalName: String, creationDate: LocalDate): doobie.Update0 =
-    sql"INSERT INTO team (name, name_canonical, creation_date) values ($name, $canonicalName, $creationDate)".update
+  def insert(name: String, slug: Slug, creationDate: LocalDate): doobie.Update0 =
+    sql"INSERT INTO team (name, slug, creation_date) values ($name, $slug, $creationDate)".update
 
-  def findByName(canonicalName: String): doobie.Query0[Team] =
-    sql"SELECT team_id, name, name_canonical, creation_date FROM team WHERE name_canonical = $canonicalName"
+  def findByName(slug: Slug): doobie.Query0[Team] =
+    sql"SELECT team_id, name, slug, creation_date FROM team WHERE slug = $slug"
       .query[Team]
 
   def findMembers(teamID: Int): doobie.Query0[Person.Member] =

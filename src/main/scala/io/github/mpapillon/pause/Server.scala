@@ -27,7 +27,7 @@ object Server extends IOApp {
 
       db = Database.impl[IO](conf.db)
       xa <- Stream.resource(db.transactor)
-      _  <- Stream.eval(db.migrate(xa))
+      _  <- Stream.eval(db.migrate())
 
       membersRepo = MembersRepository.impl(xa)
       teamRepo    = TeamsRepository.impl(xa)

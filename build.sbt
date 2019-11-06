@@ -59,7 +59,6 @@ lazy val root = (project in file("."))
       "ch.qos.logback"        % "logback-classic"         % logbackVersion,
       "org.flywaydb"          % "flyway-core"             % flywayVersion
     ),
-    addCompilerPlugin("org.typelevel" %% "kind-projector"     % "0.10.3"),
     addCompilerPlugin("com.olegpy"    %% "better-monadic-for" % "0.3.0")
   )
 

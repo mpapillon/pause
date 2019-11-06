@@ -2,24 +2,22 @@ package io.github.mpapillon.pause.domain.teams
 
 import cats.Monad
 import cats.data.{EitherT, OptionT}
-import cats.syntax.either._
-import cats.syntax.flatMap._
-import cats.syntax.functor._
+import cats.implicits._
 import io.chrisdavenport.cats.effect.time.JavaTime
 import io.chrisdavenport.fuuid.FUUID
 import io.github.mpapillon.pause.domain.teams.TeamsError._
-import io.github.mpapillon.pause.model.{Person, Team}
+import io.github.mpapillon.pause.model.{Person, Slug, Team}
 import io.github.mpapillon.pause.repository.{MembersRepository, RepositoryError, TeamsRepository}
 
 trait Teams[F[_]] {
 
   def all: F[Vector[Team]]
-  def add(name: String, canonicalName: String): F[Either[TeamsError, Team]]
-  def get(canonicalName: String): F[Option[Team]]
-  def membersOf(canonicalName: String): F[Either[TeamsError, Vector[Person.Member]]]
-  def managersOf(canonicalName: String): F[Either[TeamsError, Vector[Person.Manager]]]
-  def join(canonicalName: String, membersID: FUUID): F[Either[TeamsError, Unit]]
-  def leave(canonicalName: String, membersID: FUUID): F[Either[TeamsError, Unit]]
+  def add(name: String): F[Either[TeamsError, Team]]
+  def get(slug: Slug): F[Option[Team]]
+  def membersOf(slug: Slug): F[Either[TeamsError, Vector[Person.Member]]]
+  def managersOf(slug: Slug): F[Either[TeamsError, Vector[Person.Manager]]]
+  def join(slug: Slug, membersID: FUUID): F[Either[TeamsError, Unit]]
+  def leave(slug: Slug, membersID: FUUID): F[Either[TeamsError, Unit]]
 }
 
 object Teams {
@@ -32,50 +30,51 @@ object Teams {
     override def all: F[Vector[Team]] =
       teamsRepo.findAll()
 
-    override def add(name: String, canonicalName: String): F[Either[TeamsError, Team]] =
+    override def add(name: String): F[Either[TeamsError, Team]] =
       for {
         creationDate <- JavaTime[F].getLocalDateUTC
-        teamId       <- teamsRepo.insert(name, canonicalName, creationDate)
-        team         = teamId.map(Team(_, name, canonicalName, creationDate))
+        slug         = Slug(name)
+        teamId       <- teamsRepo.insert(name, slug, creationDate)
+        team         = teamId.map(Team(_, name, slug, creationDate))
       } yield team.leftMap {
-        case RepositoryError.UniqueViolationConstraintError => TeamAlreadyExists(canonicalName)
+        case RepositoryError.UniqueViolationConstraintError => TeamAlreadyExists(slug)
       }
 
-    override def get(canonicalName: String): F[Option[Team]] =
-      teamsRepo.findByName(canonicalName)
+    override def get(slug: Slug): F[Option[Team]] =
+      teamsRepo.findBySlug(slug)
 
-    override def membersOf(canonicalName: String): F[Either[TeamsError, Vector[Person.Member]]] = {
+    override def membersOf(slug: Slug): F[Either[TeamsError, Vector[Person.Member]]] = {
       for {
-        team    <- OptionT(teamsRepo.findByName(canonicalName)).toRight(TeamNotFound(canonicalName))
+        team    <- OptionT(teamsRepo.findBySlug(slug)).toRight(TeamNotFound(slug))
         members <- EitherT.right[TeamsError](teamsRepo.findMembers(team.id))
       } yield members
     }.value
 
-    override def managersOf(canonicalName: String): F[Either[TeamsError, Vector[Person.Manager]]] = {
+    override def managersOf(slug: Slug): F[Either[TeamsError, Vector[Person.Manager]]] = {
       for {
-        team    <- OptionT(teamsRepo.findByName(canonicalName)).toRight(TeamNotFound(canonicalName))
+        team    <- OptionT(teamsRepo.findBySlug(slug)).toRight(TeamNotFound(slug))
         members <- EitherT.right[TeamsError](teamsRepo.findManagers(team.id))
       } yield members
     }.value
 
-    override def join(canonicalName: String, memberID: FUUID): F[Either[TeamsError, Unit]] = {
+    override def join(slug: Slug, memberID: FUUID): F[Either[TeamsError, Unit]] = {
       for {
-        team <- OptionT(teamsRepo.findByName(canonicalName)).toRight(TeamNotFound(canonicalName))
+        team <- OptionT(teamsRepo.findBySlug(slug)).toRight(TeamNotFound(slug))
         _    <- OptionT(membersRepo.findById(memberID)).toRight(MemberNotFound(memberID))
         _ <- EitherT(teamsRepo.insertMember(team.id, memberID)).leftMap[TeamsError] {
               case RepositoryError.UniqueViolationConstraintError =>
-                MembershipAlreadyExists(canonicalName, memberID)
+                MembershipAlreadyExists(slug, memberID)
             }
       } yield ()
     }.value
 
-    override def leave(canonicalName: String, memberID: FUUID): F[Either[TeamsError, Unit]] = {
+    override def leave(slug: Slug, memberID: FUUID): F[Either[TeamsError, Unit]] = {
       for {
-        team <- OptionT(teamsRepo.findByName(canonicalName)).toRight(TeamNotFound(canonicalName))
+        team <- OptionT(teamsRepo.findBySlug(slug)).toRight(TeamNotFound(slug))
         _    <- OptionT(membersRepo.findById(memberID)).toRight(MemberNotFound(memberID))
         _ <- EitherT
               .right[TeamsError](teamsRepo.deleteMember(team.id, memberID))
-              .subflatMap(nb => Either.cond(nb == 0, (), MembershipDoesNotExists(canonicalName, memberID)))
+              .subflatMap(nb => Either.cond(nb == 0, (), MembershipDoesNotExists(slug, memberID)))
       } yield ()
     }.value
   }

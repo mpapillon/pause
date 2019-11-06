@@ -1,21 +1,20 @@
 package io.github.mpapillon.pause
 
 import cats.effect.{Async, ContextShift, Resource, Sync}
-import cats.syntax.flatMap._
-import cats.syntax.functor._
 import com.zaxxer.hikari.HikariDataSource
 import doobie.Transactor
 import doobie.hikari.HikariTransactor
 import doobie.util.ExecutionContexts
-import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import io.github.mpapillon.pause.Database.DataSourceTransactor
 import javax.sql.DataSource
 import org.flywaydb.core.Flyway
 
+import scala.util.Try
+
 trait Database[F[_], A <: DataSource] {
 
   def transactor: Resource[F, DataSourceTransactor[F, A]]
-  def migrate(transactor: DataSourceTransactor[F, A]): F[Unit]
+  def migrate(): F[Int]
 }
 
 object Database {
@@ -41,16 +40,14 @@ object Database {
                )
         } yield xa
 
-      override def migrate(transactor: DataSourceTransactor[F, HikariDataSource]): F[Unit] =
-        transactor.configure { ds =>
-          for {
-            logger <- Slf4jLogger.create[F]
-            _      <- logger.info("Starting Flyway database migration")
-            _      <- Sync[F].delay {
-                       val flyWay = Flyway.configure().dataSource(ds).load()
-                       flyWay.migrate()
-                     }
-          } yield ()
-        }
+      override def migrate(): F[Int] =
+        transactor.use(_.configure { ds =>
+          Sync[F].fromTry {
+            Try {
+              val flyWay = Flyway.configure().dataSource(ds).load()
+              flyWay.migrate()
+            }
+          }
+        })
     }
 }
