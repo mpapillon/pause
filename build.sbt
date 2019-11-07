@@ -3,13 +3,10 @@ val catsEffectVersion       	= 	"1.4.0"
 val catsVersion             	= 	"1.6.1"
 val circeVersion            	= 	"0.11.1"
 val doobieVersion           	= 	"0.7.1"
-val enumeratumVersion       	= 	"1.5.13"
-val enumertaumDoobieVersion 	= 	"1.5.15"
-val enumratumCirceVersion   	= 	"1.5.21"
 val flywayVersion           	= 	"6.0.0"
 val fs2Version              	= 	"1.0.5"
 val fuuidVersion            	= 	"0.2.0"
-val http4sVersion           	= 	"0.20.11"
+val http4sVersion           	= 	"0.20.13"
 val log4catsVersion         	= 	"0.3.0"
 val logbackVersion          	= 	"1.2.3"
 val pureconfigVersion       	= 	"0.11.1"
@@ -45,9 +42,6 @@ lazy val root = (project in file("."))
       "io.chrisdavenport"     %% "fuuid-circe"            % fuuidVersion,
       "io.chrisdavenport"     %% "fuuid-doobie"           % fuuidVersion,
       "io.chrisdavenport"     %% "cats-effect-time"       % catsEffectTimeVersion,
-      "com.beachape"          %% "enumeratum"             % enumeratumVersion,
-      "com.beachape"          %% "enumeratum-doobie"      % enumertaumDoobieVersion,
-      "com.beachape"          %% "enumeratum-circe"       % enumratumCirceVersion,
       "com.github.pureconfig" %% "pureconfig"             % pureconfigVersion,
       "com.github.pureconfig" %% "pureconfig-http4s"      % pureconfigVersion,
       "com.github.pureconfig" %% "pureconfig-cats"        % pureconfigVersion,
@@ -60,6 +54,8 @@ lazy val root = (project in file("."))
     ),
     addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.0")
   )
+
+logBuffered in Test := false
 
 scalacOptions ++= Seq(
   "-deprecation",

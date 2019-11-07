@@ -1,4 +1,4 @@
-package io.github.mpapillon.pause.domain.members
+package io.github.mpapillon.pause.domain.member
 
 import cats.Monad
 import cats.data.EitherT

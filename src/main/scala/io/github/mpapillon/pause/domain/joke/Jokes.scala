@@ -1,4 +1,4 @@
-package io.github.mpapillon.pause.domain.jokes
+package io.github.mpapillon.pause.domain.joke
 
 import cats.Applicative
 import cats.effect.Sync

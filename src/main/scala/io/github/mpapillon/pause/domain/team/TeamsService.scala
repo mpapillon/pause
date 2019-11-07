@@ -1,4 +1,4 @@
-package io.github.mpapillon.pause.domain.teams
+package io.github.mpapillon.pause.domain.team
 
 import cats.data.OptionT
 import cats.effect.Sync
@@ -14,14 +14,14 @@ import org.http4s.circe.CirceEntityDecoder._
 import org.http4s.circe._
 import org.http4s.dsl.Http4sDsl
 
-object TeamsRoutes {
+object TeamsService {
 
-  private[this] case class TeamName(value: String) extends AnyVal
+  private case class TeamName(value: String) extends AnyVal
 
-  private[this] implicit val teamCreationDecoder: Decoder[TeamName] =
+  private implicit val teamCreationDecoder: Decoder[TeamName] =
     Decoder.forProduct1("name")((name: String) => TeamName(name))
 
-  private[this] implicit val teamDecoder: Encoder[Team] =
+  private implicit val teamEncoder: Encoder[Team] =
     Encoder.forProduct3("name", "slug", "creationDate")(t => (t.name, t.slug, t.creationDate))
 
   def apply[F[_]: Sync](teams: Teams[F])(implicit dsl: Http4sDsl[F]): HttpRoutes[F] = {
@@ -34,10 +34,10 @@ object TeamsRoutes {
         Conflict(s"Team with slug ${slug.value} already exists".asJson)
       case TeamsError.MemberNotFound(id) =>
         NotFound(s"Member with id $id does not exists.".asJson)
-      case TeamsError.MembershipAlreadyExists(slug, memberID) =>
-        Conflict(s"The team with slug ${slug.value} already contains member $memberID".asJson)
-      case TeamsError.MembershipDoesNotExists(slug, memberID) =>
-        NotFound(s"The member $memberID is not part of the team with slug ${slug.value}".asJson)
+      case TeamsError.MembershipAlreadyExists(slug, memberId) =>
+        Conflict(s"The team with slug ${slug.value} already contains member $memberId".asJson)
+      case TeamsError.MembershipDoesNotExists(slug, memberId) =>
+        NotFound(s"The member $memberId is not part of the team with slug ${slug.value}".asJson)
     }
 
     HttpRoutes.of[F] {

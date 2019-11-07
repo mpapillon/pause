@@ -1,4 +1,4 @@
-package io.github.mpapillon.pause.domain.teams
+package io.github.mpapillon.pause.domain.team
 
 import io.chrisdavenport.fuuid.FUUID
 import io.github.mpapillon.pause.model.Slug

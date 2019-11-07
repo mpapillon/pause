@@ -1,11 +1,12 @@
-package io.github.mpapillon.pause.domain.teams
+package io.github.mpapillon.pause.domain.team
 
 import cats.Monad
 import cats.data.{EitherT, OptionT}
+import cats.effect.Clock
 import cats.implicits._
-import io.chrisdavenport.cats.effect.time.JavaTime
+import io.chrisdavenport.cats.effect.time.implicits._
 import io.chrisdavenport.fuuid.FUUID
-import io.github.mpapillon.pause.domain.teams.TeamsError._
+import io.github.mpapillon.pause.domain.team.TeamsError._
 import io.github.mpapillon.pause.model.{Person, Slug, Team}
 import io.github.mpapillon.pause.repository.{MembersRepository, RepositoryError, TeamsRepository}
 import io.github.mpapillon.pause.syntax.slug._
@@ -23,17 +24,17 @@ trait Teams[F[_]] {
 
 object Teams {
 
-  def impl[F[_]: Monad: JavaTime](
+  def impl[F[_]: Monad](
       teamsRepo: TeamsRepository[F],
       membersRepo: MembersRepository[F]
-  ): Teams[F] = new Teams[F] {
+  )(implicit clock: Clock[F]): Teams[F] = new Teams[F] {
 
     override def all: F[Vector[Team]] =
       teamsRepo.findAll()
 
     override def add(name: String): F[Either[TeamsError, Team]] =
       for {
-        creationDate <- JavaTime[F].getLocalDateUTC
+        creationDate <- clock.getLocalDateUTC
         slug         = name.slugify
         teamId       <- teamsRepo.insert(name, slug, creationDate)
         team         = teamId.map(Team(_, name, slug, creationDate))

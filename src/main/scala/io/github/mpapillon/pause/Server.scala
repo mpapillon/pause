@@ -5,9 +5,9 @@ import java.util.concurrent.Executors.newCachedThreadPool
 import cats.effect._
 import cats.syntax.functor._
 import fs2.Stream
-import io.github.mpapillon.pause.domain.jokes.{Jokes, JokesRoutes}
-import io.github.mpapillon.pause.domain.members.{Members, MembersRoutes}
-import io.github.mpapillon.pause.domain.teams.{Teams, TeamsRoutes}
+import io.github.mpapillon.pause.domain.joke.{Jokes, JokesService}
+import io.github.mpapillon.pause.domain.member.{Members, MembersService}
+import io.github.mpapillon.pause.domain.team.{Teams, TeamsService}
 import io.github.mpapillon.pause.repository.{MembersRepository, TeamsRepository}
 import org.http4s.client.blaze.BlazeClientBuilder
 import org.http4s.dsl.Http4sDsl
@@ -40,9 +40,9 @@ object Server extends IOApp {
 
       router = Router(
         "/api/v1" -> Router(
-          "/members" -> MembersRoutes(membersAlg),
-          "/teams"   -> TeamsRoutes(teamsAlg),
-          "/joke"    -> JokesRoutes(jokeAlg)
+          "/members" -> MembersService(membersAlg),
+          "/teams"   -> TeamsService(teamsAlg),
+          "/joke"    -> JokesService(jokeAlg)
         )
       ).orNotFound
 
