@@ -3,7 +3,7 @@ package io.github.mpapillon.pause.syntax
 import io.github.mpapillon.pause.model.Slug
 
 class StringToSlug(s: String) {
-  def slug = Slug(s)
+  def slugify: Slug = Slug.slugify(s)
 }
 
 trait SlugOps {

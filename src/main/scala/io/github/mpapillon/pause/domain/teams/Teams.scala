@@ -8,6 +8,7 @@ import io.chrisdavenport.fuuid.FUUID
 import io.github.mpapillon.pause.domain.teams.TeamsError._
 import io.github.mpapillon.pause.model.{Person, Slug, Team}
 import io.github.mpapillon.pause.repository.{MembersRepository, RepositoryError, TeamsRepository}
+import io.github.mpapillon.pause.syntax.slug._
 
 trait Teams[F[_]] {
 
@@ -33,7 +34,7 @@ object Teams {
     override def add(name: String): F[Either[TeamsError, Team]] =
       for {
         creationDate <- JavaTime[F].getLocalDateUTC
-        slug         = Slug(name)
+        slug         = name.slugify
         teamId       <- teamsRepo.insert(name, slug, creationDate)
         team         = teamId.map(Team(_, name, slug, creationDate))
       } yield team.leftMap {
