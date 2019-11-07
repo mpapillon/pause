@@ -1,20 +1,20 @@
-val catsVersion             = "1.6.1"
-val catsEffectVersion       = "1.4.0"
-val catsEffectTimeVersion   = "0.0.4"
-val fs2Version              = "1.0.5"
-val http4sVersion           = "0.20.11"
-val doobieVersion           = "0.7.1"
-val circeVersion            = "0.11.1"
-val fuuidVersion            = "0.2.0"
-val pureconfigVersion       = "0.11.1"
-val specs2Version           = "4.7.0"
-val logbackVersion          = "1.2.3"
-val enumeratumVersion       = "1.5.13"
-val enumertaumDoobieVersion = "1.5.15"
-val enumratumCirceVersion   = "1.5.21"
-val flywayVersion           = "6.0.0"
-
-val log4catsVersion = "0.3.0"
+val catsEffectTimeVersion   	= 	"0.0.4"
+val catsEffectVersion       	= 	"1.4.0"
+val catsVersion             	= 	"1.6.1"
+val circeVersion            	= 	"0.11.1"
+val doobieVersion           	= 	"0.7.1"
+val enumeratumVersion       	= 	"1.5.13"
+val enumertaumDoobieVersion 	= 	"1.5.15"
+val enumratumCirceVersion   	= 	"1.5.21"
+val flywayVersion           	= 	"6.0.0"
+val fs2Version              	= 	"1.0.5"
+val fuuidVersion            	= 	"0.2.0"
+val http4sVersion           	= 	"0.20.11"
+val log4catsVersion         	= 	"0.3.0"
+val logbackVersion          	= 	"1.2.3"
+val pureconfigVersion       	= 	"0.11.1"
+val scalaMockVersion        	= 	"4.4.0"
+val scalaTestVersion        	= 	"3.0.8"
 
 lazy val root = (project in file("."))
   .configs(IntegrationTest)
@@ -36,7 +36,7 @@ lazy val root = (project in file("."))
       "org.tpolecat"          %% "doobie-core"            % doobieVersion,
       "org.tpolecat"          %% "doobie-hikari"          % doobieVersion,
       "org.tpolecat"          %% "doobie-postgres"        % doobieVersion,
-      "org.tpolecat"          %% "doobie-specs2"          % doobieVersion % "it",
+      "org.tpolecat"          %% "doobie-scalatest"       % doobieVersion % "it",
       "io.circe"              %% "circe-generic"          % circeVersion,
       "io.circe"              %% "circe-literal"          % circeVersion,
       "io.circe"              %% "circe-jawn"             % circeVersion,
@@ -53,13 +53,12 @@ lazy val root = (project in file("."))
       "com.github.pureconfig" %% "pureconfig-cats"        % pureconfigVersion,
       "com.github.pureconfig" %% "pureconfig-cats-effect" % pureconfigVersion,
       "io.chrisdavenport"     %% "log4cats-slf4j"         % log4catsVersion,
-      "org.specs2"            %% "specs2-core"            % specs2Version % "it,test",
-      "org.specs2"            %% "specs2-cats"            % specs2Version % "test",
-      "org.specs2"            %% "specs2-mock"            % specs2Version % "test",
+      "org.scalatest"         %% "scalatest"              % scalaTestVersion % "test, it",
+      "org.scalamock"         %% "scalamock"              % scalaMockVersion % "test",
       "ch.qos.logback"        % "logback-classic"         % logbackVersion,
       "org.flywaydb"          % "flyway-core"             % flywayVersion
     ),
-    addCompilerPlugin("com.olegpy"    %% "better-monadic-for" % "0.3.0")
+    addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.0")
   )
 
 scalacOptions ++= Seq(

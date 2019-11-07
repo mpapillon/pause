@@ -4,7 +4,7 @@ package io.github.mpapillon.pause
 //import org.http4s._
 //import org.specs2.matcher.MatchResult
 
-class HelloWorldSpec extends org.specs2.mutable.Specification {
+class HelloWorldSpec {
 
 //  "HelloWorld" >> {
 //    "return 200" >> {

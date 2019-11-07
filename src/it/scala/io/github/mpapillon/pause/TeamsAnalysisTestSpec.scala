@@ -1,28 +1,15 @@
 package io.github.mpapillon.pause
 
-import cats.effect.{ContextShift, IO}
-import doobie.util.transactor.Transactor
-import doobie.util.transactor.Transactor.Aux
+import io.github.mpapillon.pause.model.Slug
 import io.github.mpapillon.pause.repository.query.TeamsQueries._
-import org.specs2.mutable.Specification
+import org.scalatest.{FunSuite, Matchers}
 
-import scala.concurrent.ExecutionContext
+class TeamsAnalysisTestSpec extends FunSuite with Matchers with DbChecker {
 
-class TeamsAnalysisTestSpec extends Specification with doobie.specs2.IOChecker {
-
-  implicit def cs: ContextShift[IO] = IO.contextShift(ExecutionContext.global)
-
-  override val transactor: Aux[IO, Unit] = Transactor.fromDriverManager[IO](
-    "org.postgresql.Driver",
-    "jdbc:postgresql:pause",
-    "postgres",
-    "",
-  )
-
-  check(findAll)
-  check(findByName("fake-team"))
-  check(findMembers(1))
-  check(findManagers(4))
-  check(insertMembers)
-  check(deleteMembers)
+  test("find all") { check(findAll) }
+  test("find by slug") { check(findBySlug(Slug("fake-team"))) }
+  test("find members") { check(findMembers(1)) }
+  test("find managers") { check(findManagers(4)) }
+  test("insert member") { check(insertMembers) }
+  test("delete member") { check(deleteMembers) }
 }

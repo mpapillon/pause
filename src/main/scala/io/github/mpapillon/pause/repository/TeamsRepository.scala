@@ -32,7 +32,7 @@ object TeamsRepository {
       TeamsQueries.findAll.to[Vector].transact(xa)
 
     override def findBySlug(slug: Slug): F[Option[Team]] =
-      TeamsQueries.findByName(slug).option.transact(xa)
+      TeamsQueries.findBySlug(slug).option.transact(xa)
 
     override def findMembers(teamId: TeamId): F[Vector[Person.Member]] =
       TeamsQueries.findMembers(teamId).to[Vector].transact(xa)

@@ -19,7 +19,7 @@ object TeamsQueries {
   def insert(name: String, slug: Slug, creationDate: LocalDate): doobie.Update0 =
     sql"INSERT INTO team (name, slug, creation_date) values ($name, $slug, $creationDate)".update
 
-  def findByName(slug: Slug): doobie.Query0[Team] =
+  def findBySlug(slug: Slug): doobie.Query0[Team] =
     sql"SELECT team_id, name, slug, creation_date FROM team WHERE slug = $slug"
       .query[Team]
 

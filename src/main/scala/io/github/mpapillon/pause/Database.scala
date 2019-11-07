@@ -5,28 +5,22 @@ import com.zaxxer.hikari.HikariDataSource
 import doobie.Transactor
 import doobie.hikari.HikariTransactor
 import doobie.util.ExecutionContexts
-import io.github.mpapillon.pause.Database.DataSourceTransactor
-import javax.sql.DataSource
 import org.flywaydb.core.Flyway
 
-import scala.util.Try
+trait Database[F[_], A] {
 
-trait Database[F[_], A <: DataSource] {
-
-  def transactor: Resource[F, DataSourceTransactor[F, A]]
+  def transactor: Resource[F, Transactor.Aux[F, A]]
   def migrate(): F[Int]
 }
 
 object Database {
-
-  type DataSourceTransactor[M[_], A <: DataSource] = Transactor.Aux[M, A]
 
   def impl[F[_]: Async](
       dbConf: Configuration.Database
   )(implicit C: ContextShift[F]): Database[F, HikariDataSource] =
     new Database[F, HikariDataSource] {
 
-      override lazy val transactor: Resource[F, DataSourceTransactor[F, HikariDataSource]] =
+      override lazy val transactor: Resource[F, HikariTransactor[F]] =
         for {
           ce <- ExecutionContexts.fixedThreadPool[F](32) // our connect EC
           te <- ExecutionContexts.cachedThreadPool[F]    // our transaction EC

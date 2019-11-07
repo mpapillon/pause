@@ -6,49 +6,43 @@ import cats.Id
 import io.chrisdavenport.fuuid.FUUID
 import io.github.mpapillon.pause.model.Member
 import io.github.mpapillon.pause.repository.{MembersRepository, RepositoryError}
-import org.specs2.matcher.IOMatchers
-import org.specs2.mutable.Specification
-import org.specs2.mock.Mockito
+import org.scalatest.{EitherValues, Matchers, WordSpec}
+import org.scalamock.scalatest.MockFactory
 
-class MembersServiceSpec extends Specification with IOMatchers with Mockito {
+class MembersServiceSpec extends WordSpec with Matchers with EitherValues with MockFactory {
 
-  "Members service" >> {
-    "should returns a list with all members" >> {
-      val mockRepo   = mock[MembersRepository[Id]]
+  "Members service" should {
+    "returns a list with all members" in {
+      val repoStub   = stub[MembersRepository[Id]]
       val membersLst = memberBuilder(3).toVector
-      val members    = Members.impl[Id](mockRepo)
+      val members    = Members.impl[Id](repoStub)
 
-      mockRepo.findAll() returns membersLst
-      members.all must not be empty
-      members.all must be size 3
-      members.all must contain(allOf(membersLst: _*))
+      repoStub.findAll _ when() returns  membersLst
+      members.all.toList should contain theSameElementsAs membersLst
     }
 
-    "should returns an empty list of members" >> {
-      val mockRepo = mock[MembersRepository[Id]]
-      val members  = Members.impl[Id](mockRepo)
+    "returns an empty list of members" in {
+      val repoStub = stub[MembersRepository[Id]]
+      val members  = Members.impl[Id](repoStub)
 
-      mockRepo.findAll() returns Vector.empty[Member]
-      members.all must be empty
+      repoStub.findAll _ when() returns Vector.empty[Member]
+      members.all shouldBe empty
     }
 
-    "should be able to add new member" >> {
-      val mockRepo = mock[MembersRepository[Id]]
-      val members  = Members.impl[Id](mockRepo)
+    "be able to add new member" in {
+      val repoStub = stub[MembersRepository[Id]]
+      val members  = Members.impl[Id](repoStub)
 
-      mockRepo.insert(org.mockito.ArgumentMatchers.any[Member]()) returns Right(1)
-      members.add(memberBuilder(1).head) must beRight()
+      repoStub.insert _ when * returns Right(1)
+      members.add(memberBuilder(1).head) shouldBe 'right
     }
 
-    "should not be able to add new member" >> {
-      val mockRepo = mock[MembersRepository[Id]]
-      val members  = Members.impl[Id](mockRepo)
+    "not be able to add new member" in {
+      val repoStub = stub[MembersRepository[Id]]
+      val members  = Members.impl[Id](repoStub)
 
-      mockRepo.insert(org.mockito.ArgumentMatchers.any[Member]()) returns {
-        Left(RepositoryError.UniqueViolationConstraintError)
-      }
-
-      members.add(memberBuilder(1).head) must beLeft(beAnInstanceOf[MembersError.MemberAlreadyExist])
+      repoStub.insert _ when * returns Left(RepositoryError.UniqueViolationConstraintError)
+      members.add(memberBuilder(1).head).left.value shouldBe a [MembersError.MemberAlreadyExist]
     }
   }
 
