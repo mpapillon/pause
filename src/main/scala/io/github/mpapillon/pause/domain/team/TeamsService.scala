@@ -7,7 +7,6 @@ import io.chrisdavenport.fuuid.http4s.FUUIDVar
 import io.circe._
 import io.circe.syntax._
 import io.github.mpapillon.pause.http4s.SlugVar
-import io.github.mpapillon.pause.model.Team
 import io.github.mpapillon.pause.syntax.response._
 import org.http4s._
 import org.http4s.circe.CirceEntityDecoder._
@@ -21,9 +20,6 @@ object TeamsService {
   private implicit val teamCreationDecoder: Decoder[TeamName] =
     Decoder.forProduct1("name")((name: String) => TeamName(name))
 
-  private implicit val teamEncoder: Encoder[Team] =
-    Encoder.forProduct3("name", "slug", "creationDate")(t => (t.name, t.slug, t.creationDate))
-
   def apply[F[_]: Sync](teams: Teams[F])(implicit dsl: Http4sDsl[F]): HttpRoutes[F] = {
     import dsl._
 
@@ -32,8 +28,8 @@ object TeamsService {
         NotFound(s"Team with slug ${slug.value} does not exists".asJson)
       case TeamsError.TeamAlreadyExists(slug) =>
         Conflict(s"Team with slug ${slug.value} already exists".asJson)
-      case TeamsError.MemberNotFound(id) =>
-        NotFound(s"Member with id $id does not exists.".asJson)
+      case TeamsError.PersonNotFound(id) =>
+        NotFound(s"Person with id $id does not exists.".asJson)
       case TeamsError.MembershipAlreadyExists(slug, memberId) =>
         Conflict(s"The team with slug ${slug.value} already contains member $memberId".asJson)
       case TeamsError.MembershipDoesNotExists(slug, memberId) =>
@@ -66,9 +62,6 @@ object TeamsService {
 
       case DELETE -> Root / SlugVar(slug) / "members" / FUUIDVar(memberId) =>
         teams.leave(slug, memberId).toResponse(_ => Ok())
-
-      case GET -> Root / SlugVar(slug) / "managers" =>
-        teams.managersOf(slug).toResponse(managers => Ok(managers.asJson))
     }
   }
 }

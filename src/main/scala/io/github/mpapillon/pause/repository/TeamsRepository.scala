@@ -5,7 +5,7 @@ import java.time.LocalDate
 import cats.effect.Async
 import doobie.util.transactor.Transactor
 import io.chrisdavenport.fuuid.FUUID
-import io.github.mpapillon.pause.model.{Person, Slug, Team}
+import io.github.mpapillon.pause.model.{Slug, Team, Member}
 import io.github.mpapillon.pause.repository.RepositoryError.{Result, handleSqlState}
 import io.github.mpapillon.pause.repository.TeamsRepository.TeamId
 import io.github.mpapillon.pause.repository.query.TeamsQueries
@@ -14,8 +14,7 @@ trait TeamsRepository[F[_]] {
 
   def findAll(): F[Vector[Team]]
   def findBySlug(slug: Slug): F[Option[Team]]
-  def findMembers(teamId: TeamId): F[Vector[Person.Member]]
-  def findManagers(teamId: TeamId): F[Vector[Person.Manager]]
+  def findMembers(teamId: TeamId): F[Vector[Member]]
   def insert(name: String, slug: Slug, creationDate: LocalDate): F[Result[TeamId]]
   def insertMember(teamId: TeamId, memberId: FUUID): F[Result[Int]]
   def deleteMember(teamId: TeamId, memberId: FUUID): F[Int]
@@ -34,11 +33,8 @@ object TeamsRepository {
     override def findBySlug(slug: Slug): F[Option[Team]] =
       TeamsQueries.findBySlug(slug).option.transact(xa)
 
-    override def findMembers(teamId: TeamId): F[Vector[Person.Member]] =
+    override def findMembers(teamId: TeamId): F[Vector[Member]] =
       TeamsQueries.findMembers(teamId).to[Vector].transact(xa)
-
-    override def findManagers(teamId: TeamId): F[Vector[Person.Manager]] =
-      TeamsQueries.findManagers(teamId).to[Vector].transact(xa)
 
     override def insert(
         name: String,

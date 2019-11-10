@@ -34,6 +34,9 @@ trait DbChecker extends IOChecker { self: Assertions =>
         }
       }
 
+
+    override def validate(): IO[Unit] = IO.unit
+
     override def migrate(): IO[Int] =
       config.flatMap { conf =>
         IO.delay {

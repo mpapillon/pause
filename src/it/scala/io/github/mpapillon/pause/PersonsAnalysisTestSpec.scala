@@ -3,10 +3,10 @@ package io.github.mpapillon.pause
 import java.util.UUID.randomUUID
 
 import io.chrisdavenport.fuuid.FUUID
-import io.github.mpapillon.pause.repository.query.MembersQueries._
+import io.github.mpapillon.pause.repository.query.PersonsQueries._
 import org.scalatest.{FunSuite, Matchers}
 
-class MembersAnalysisTestSpec extends FunSuite with Matchers with DbChecker {
+class PersonsAnalysisTestSpec extends FunSuite with Matchers with DbChecker {
 
   test("find all") { check(findAll) }
   test("find by id") { check(findById(FUUID.fromUUID(randomUUID()))) }

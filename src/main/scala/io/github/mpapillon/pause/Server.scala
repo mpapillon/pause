@@ -3,12 +3,11 @@ package io.github.mpapillon.pause
 import java.util.concurrent.Executors.newCachedThreadPool
 
 import cats.effect._
-import cats.syntax.functor._
 import fs2.Stream
 import io.github.mpapillon.pause.domain.joke.{Jokes, JokesService}
-import io.github.mpapillon.pause.domain.member.{Members, MembersService}
+import io.github.mpapillon.pause.domain.person.{Persons, PersonsService}
 import io.github.mpapillon.pause.domain.team.{Teams, TeamsService}
-import io.github.mpapillon.pause.repository.{MembersRepository, TeamsRepository}
+import io.github.mpapillon.pause.repository.{PersonsRepository, TeamsRepository}
 import org.http4s.client.blaze.BlazeClientBuilder
 import org.http4s.dsl.Http4sDsl
 import org.http4s.implicits._
@@ -18,45 +17,42 @@ import org.http4s.server.middleware.{Logger => HttpLogger}
 
 import scala.concurrent.ExecutionContext
 
-object Server extends IOApp {
+object Server {
 
-  private def stream(blockingEc: ExecutionContext): Stream[IO, ExitCode] =
+  private val blockingEc = ExecutionContext.fromExecutor(newCachedThreadPool())
+
+  def stream[F[_]: ConcurrentEffect]()(implicit cs: ContextShift[F], timer: Timer[F]): Stream[F, ExitCode] =
     for {
-      client <- BlazeClientBuilder[IO](blockingEc).stream
-      conf   <- Stream.eval(Configuration.load[IO]())
+      client <- BlazeClientBuilder[F](blockingEc).stream
+      conf   <- Stream.eval(Configuration.load[F]())
 
-      db = Database.impl[IO](conf.db)
+      db = Database.impl[F](conf.db)
       xa <- Stream.resource(db.transactor)
       _  <- Stream.eval(db.migrate())
 
-      membersRepo = MembersRepository.impl(xa)
+      personsRepo = PersonsRepository.impl(xa)
       teamRepo    = TeamsRepository.impl(xa)
 
-      membersAlg = Members.impl(membersRepo)
-      teamsAlg   = Teams.impl(teamRepo, membersRepo)
+      personsAlg = Persons.impl(personsRepo)
+      teamsAlg   = Teams.impl(teamRepo, personsRepo)
       jokeAlg    = Jokes.impl(client)
 
-      implicit0(dsl: Http4sDsl[IO]) = new Http4sDsl[IO] {}
+      implicit0(dsl: Http4sDsl[F]) = new Http4sDsl[F] {}
 
       router = Router(
         "/api/v1" -> Router(
-          "/members" -> MembersService(membersAlg),
+          "/persons" -> PersonsService(personsAlg),
           "/teams"   -> TeamsService(teamsAlg),
           "/joke"    -> JokesService(jokeAlg)
         )
       ).orNotFound
 
       httpApp = HttpLogger.httpApp(logHeaders = true, logBody = true)(router)
-      exitCode <- BlazeServerBuilder[IO]
+      exitCode <- BlazeServerBuilder[F]
                    .withBanner(Nil)
                    .bindHttp(conf.port, "0.0.0.0")
                    .withHttpApp(httpApp)
                    .serve
     } yield exitCode
-
-  def run(args: List[String]): IO[ExitCode] = {
-    val blockingEc = ExecutionContext.fromExecutor(newCachedThreadPool())
-    stream(blockingEc).compile.drain.as(ExitCode.Success)
-  }
 
 }

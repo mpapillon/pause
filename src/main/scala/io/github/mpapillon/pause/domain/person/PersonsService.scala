@@ -1,4 +1,4 @@
-package io.github.mpapillon.pause.domain.member
+package io.github.mpapillon.pause.domain.person
 
 import cats.data.{EitherT, OptionT}
 import cats.effect.Sync
@@ -8,27 +8,27 @@ import io.chrisdavenport.fuuid.http4s.FUUIDVar
 import io.circe._
 import io.circe.generic.semiauto._
 import io.circe.syntax._
-import io.github.mpapillon.pause.model.Member
+import io.github.mpapillon.pause.model.Person
 import io.github.mpapillon.pause.syntax.response._
 import org.http4s.circe.CirceEntityDecoder._
 import org.http4s.circe._
 import org.http4s.dsl.Http4sDsl
 import org.http4s.{HttpRoutes, Response}
 
-object MembersService {
+object PersonsService {
 
   private final case class MemberCreation(firstName: String, lastName: String, email: Option[String])
 
   private implicit val memberCreationDecoder: Decoder[MemberCreation] = deriveDecoder
 
-  def apply[F[_]: Sync](members: Members[F])(implicit dsl: Http4sDsl[F]): HttpRoutes[F] = {
+  def apply[F[_]: Sync](members: Persons[F])(implicit dsl: Http4sDsl[F]): HttpRoutes[F] = {
     import dsl._
 
-    implicit val handleErrors: MembersError => F[Response[F]] = {
-      case MembersError.MemberAlreadyExist(id) =>
-        Conflict(s"Member with id $id already exists.".asJson)
-      case MembersError.MemberNotFound(id) =>
-        NotFound(s"The member $id does not exists.".asJson)
+    implicit val handleErrors: PersonsError => F[Response[F]] = {
+      case PersonsError.PersonAlreadyExist(id) =>
+        Conflict(s"Person with id $id already exists.".asJson)
+      case PersonsError.PersonNotFound(id) =>
+        NotFound(s"The person $id does not exists.".asJson)
     }
 
     HttpRoutes.of[F] {
@@ -43,13 +43,13 @@ object MembersService {
           MemberCreation(firstName, lastName, email) <- req.as[MemberCreation]
 
           id     <- FUUID.randomFUUID
-          member = Member(id, firstName, lastName, email)
+          member = Person(id, firstName, lastName, email)
           resp   <- EitherT(members.add(member)).toResponse(_ => Created(member.asJson))
         } yield resp
 
       case GET -> Root / FUUIDVar(id) =>
         OptionT(members.get(id))
-          .toRight(MembersError.MemberNotFound(id))
+          .toRight(PersonsError.PersonNotFound(id))
           .toResponse(member => Ok(member.asJson))
 
       case DELETE -> Root / FUUIDVar(id) =>

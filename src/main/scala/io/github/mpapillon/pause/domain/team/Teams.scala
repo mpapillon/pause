@@ -7,8 +7,8 @@ import cats.implicits._
 import io.chrisdavenport.cats.effect.time.implicits._
 import io.chrisdavenport.fuuid.FUUID
 import io.github.mpapillon.pause.domain.team.TeamsError._
-import io.github.mpapillon.pause.model.{Person, Slug, Team}
-import io.github.mpapillon.pause.repository.{MembersRepository, RepositoryError, TeamsRepository}
+import io.github.mpapillon.pause.model.{Member, Slug, Team}
+import io.github.mpapillon.pause.repository.{PersonsRepository, RepositoryError, TeamsRepository}
 import io.github.mpapillon.pause.syntax.slug._
 
 trait Teams[F[_]] {
@@ -16,17 +16,16 @@ trait Teams[F[_]] {
   def all: F[Vector[Team]]
   def add(name: String): F[Either[TeamsError, Team]]
   def get(slug: Slug): F[Option[Team]]
-  def membersOf(slug: Slug): F[Either[TeamsError, Vector[Person.Member]]]
-  def managersOf(slug: Slug): F[Either[TeamsError, Vector[Person.Manager]]]
-  def join(slug: Slug, membersID: FUUID): F[Either[TeamsError, Unit]]
-  def leave(slug: Slug, membersID: FUUID): F[Either[TeamsError, Unit]]
+  def membersOf(slug: Slug): F[Either[TeamsError, Vector[Member]]]
+  def join(slug: Slug, personId: FUUID): F[Either[TeamsError, Unit]]
+  def leave(slug: Slug, personId: FUUID): F[Either[TeamsError, Unit]]
 }
 
 object Teams {
 
   def impl[F[_]: Monad](
       teamsRepo: TeamsRepository[F],
-      membersRepo: MembersRepository[F]
+      personsRepo: PersonsRepository[F]
   )(implicit clock: Clock[F]): Teams[F] = new Teams[F] {
 
     override def all: F[Vector[Team]] =
@@ -45,38 +44,31 @@ object Teams {
     override def get(slug: Slug): F[Option[Team]] =
       teamsRepo.findBySlug(slug)
 
-    override def membersOf(slug: Slug): F[Either[TeamsError, Vector[Person.Member]]] = {
+    override def membersOf(slug: Slug): F[Either[TeamsError, Vector[Member]]] = {
       for {
         team    <- OptionT(teamsRepo.findBySlug(slug)).toRight(TeamNotFound(slug))
         members <- EitherT.right[TeamsError](teamsRepo.findMembers(team.id))
       } yield members
     }.value
 
-    override def managersOf(slug: Slug): F[Either[TeamsError, Vector[Person.Manager]]] = {
-      for {
-        team    <- OptionT(teamsRepo.findBySlug(slug)).toRight(TeamNotFound(slug))
-        members <- EitherT.right[TeamsError](teamsRepo.findManagers(team.id))
-      } yield members
-    }.value
-
-    override def join(slug: Slug, memberID: FUUID): F[Either[TeamsError, Unit]] = {
+    override def join(slug: Slug, personId: FUUID): F[Either[TeamsError, Unit]] = {
       for {
         team <- OptionT(teamsRepo.findBySlug(slug)).toRight(TeamNotFound(slug))
-        _    <- OptionT(membersRepo.findById(memberID)).toRight(MemberNotFound(memberID))
-        _ <- EitherT(teamsRepo.insertMember(team.id, memberID)).leftMap[TeamsError] {
+        _    <- OptionT(personsRepo.findById(personId)).toRight(PersonNotFound(personId))
+        _ <- EitherT(teamsRepo.insertMember(team.id, personId)).leftMap[TeamsError] {
               case RepositoryError.UniqueViolationConstraintError =>
-                MembershipAlreadyExists(slug, memberID)
+                MembershipAlreadyExists(slug, personId)
             }
       } yield ()
     }.value
 
-    override def leave(slug: Slug, memberID: FUUID): F[Either[TeamsError, Unit]] = {
+    override def leave(slug: Slug, personId: FUUID): F[Either[TeamsError, Unit]] = {
       for {
         team <- OptionT(teamsRepo.findBySlug(slug)).toRight(TeamNotFound(slug))
-        _    <- OptionT(membersRepo.findById(memberID)).toRight(MemberNotFound(memberID))
+        _    <- OptionT(personsRepo.findById(personId)).toRight(PersonNotFound(personId))
         _ <- EitherT
-              .right[TeamsError](teamsRepo.deleteMember(team.id, memberID))
-              .subflatMap(nb => Either.cond(nb == 0, (), MembershipDoesNotExists(slug, memberID)))
+              .right[TeamsError](teamsRepo.deleteMember(team.id, personId))
+              .subflatMap(nb => Either.cond(nb == 0, (), MembershipDoesNotExists(slug, personId)))
       } yield ()
     }.value
   }

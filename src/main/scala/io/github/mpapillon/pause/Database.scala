@@ -1,19 +1,24 @@
 package io.github.mpapillon.pause
 
 import cats.effect.{Async, ContextShift, Resource, Sync}
+import cats.syntax.monadError._
 import com.zaxxer.hikari.HikariDataSource
 import doobie.Transactor
 import doobie.hikari.HikariTransactor
 import doobie.util.ExecutionContexts
 import org.flywaydb.core.Flyway
+import org.flywaydb.core.api.FlywayException
 
 trait Database[F[_], A] {
 
   def transactor: Resource[F, Transactor.Aux[F, A]]
   def migrate(): F[Int]
+  def validate(): F[Unit]
 }
 
 object Database {
+
+  final case class DatabaseValidationError(message: String) extends RuntimeException(message)
 
   def impl[F[_]: Async](
       dbConf: Configuration.Database
@@ -34,12 +39,15 @@ object Database {
                )
         } yield xa
 
+      private val flyway: Resource[F, Flyway] =
+        transactor.map(_.kernel).map(ds => Flyway.configure().dataSource(ds).load())
+
       override def migrate(): F[Int] =
-        transactor.use(_.configure { ds =>
-          Sync[F].delay {
-            val flyWay = Flyway.configure().dataSource(ds).load()
-            flyWay.migrate()
-          }
-        })
+        flyway.use(fw => Sync[F].delay(fw.migrate()))
+
+      override def validate(): F[Unit] =
+        flyway.use(fw => Sync[F].delay(fw.validate())).adaptError {
+          case ex: FlywayException => DatabaseValidationError(ex.getLocalizedMessage)
+        }
     }
 }

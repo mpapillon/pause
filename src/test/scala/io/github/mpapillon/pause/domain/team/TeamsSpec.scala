@@ -5,7 +5,7 @@ import java.time.{LocalDate, OffsetDateTime}
 import cats.effect.{Clock, IO}
 import io.github.mpapillon.pause.fixedClock
 import io.github.mpapillon.pause.model.{Slug, Team}
-import io.github.mpapillon.pause.repository.{MembersRepository, TeamsRepository}
+import io.github.mpapillon.pause.repository.{PersonsRepository, TeamsRepository}
 import org.scalamock.scalatest.AsyncMockFactory
 import org.scalatest.{AsyncWordSpec, EitherValues, Matchers}
 
@@ -17,7 +17,7 @@ class TeamsSpec extends AsyncWordSpec with AsyncMockFactory with Matchers with E
 
     "returns a list with all teams" in {
       val teamsRepoStub   = stub[TeamsRepository[IO]]
-      val membersRepoStub = stub[MembersRepository[IO]]
+      val membersRepoStub = stub[PersonsRepository[IO]]
       val teamsAlg        = Teams.impl(teamsRepoStub, membersRepoStub)
 
       val teamsLst = Vector(
@@ -34,7 +34,7 @@ class TeamsSpec extends AsyncWordSpec with AsyncMockFactory with Matchers with E
 
     "adds new team" in {
       val teamsRepoStub   = stub[TeamsRepository[IO]]
-      val membersRepoStub = stub[MembersRepository[IO]]
+      val membersRepoStub = stub[PersonsRepository[IO]]
       val teamsAlg        = Teams.impl(teamsRepoStub, membersRepoStub)
 
       teamsRepoStub.insert _ when (*, *, *) returns IO.pure(Right(189))
