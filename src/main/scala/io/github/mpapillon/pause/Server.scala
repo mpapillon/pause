@@ -21,7 +21,8 @@ object Server {
 
   private val blockingEc = ExecutionContext.fromExecutor(newCachedThreadPool())
 
-  def stream[F[_]: ConcurrentEffect]()(implicit cs: ContextShift[F], timer: Timer[F]): Stream[F, ExitCode] =
+  def stream[F[_]: ConcurrentEffect]()(implicit cs: ContextShift[F], timer: Timer[F]): Stream[F, ExitCode] = {
+    implicit val dsl: Http4sDsl[F] = Http4sDsl[F]
     for {
       client <- BlazeClientBuilder[F](blockingEc).stream
       conf   <- Stream.eval(Configuration.load[F]())
@@ -36,8 +37,6 @@ object Server {
       personsAlg = Persons.impl(personsRepo)
       teamsAlg   = Teams.impl(teamRepo, personsRepo)
       jokeAlg    = Jokes.impl(client)
-
-      implicit0(dsl: Http4sDsl[F]) = new Http4sDsl[F] {}
 
       router = Router(
         "/api/v1" -> Router(
@@ -54,5 +53,6 @@ object Server {
                    .withHttpApp(httpApp)
                    .serve
     } yield exitCode
+  }
 
 }

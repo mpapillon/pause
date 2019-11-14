@@ -11,7 +11,7 @@ import org.scalatest.{AsyncWordSpec, EitherValues, Matchers}
 
 class TeamsSpec extends AsyncWordSpec with AsyncMockFactory with Matchers with EitherValues {
 
-  "Teams service" should {
+  "Teams" should {
 
     implicit val clock: Clock[IO] = fixedClock(OffsetDateTime.parse("2019-07-09T10:15:30Z").toInstant)
 

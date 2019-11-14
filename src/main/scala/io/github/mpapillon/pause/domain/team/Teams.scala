@@ -1,11 +1,12 @@
 package io.github.mpapillon.pause.domain.team
 
+import java.util.UUID
+
 import cats.Monad
 import cats.data.{EitherT, OptionT}
 import cats.effect.Clock
 import cats.implicits._
 import io.chrisdavenport.cats.effect.time.implicits._
-import io.chrisdavenport.fuuid.FUUID
 import io.github.mpapillon.pause.domain.team.TeamsError._
 import io.github.mpapillon.pause.model.{Member, Slug, Team}
 import io.github.mpapillon.pause.repository.{PersonsRepository, RepositoryError, TeamsRepository}
@@ -17,8 +18,8 @@ trait Teams[F[_]] {
   def add(name: String): F[Either[TeamsError, Team]]
   def get(slug: Slug): F[Option[Team]]
   def membersOf(slug: Slug): F[Either[TeamsError, Vector[Member]]]
-  def join(slug: Slug, personId: FUUID): F[Either[TeamsError, Unit]]
-  def leave(slug: Slug, personId: FUUID): F[Either[TeamsError, Unit]]
+  def join(slug: Slug, personId: UUID): F[Either[TeamsError, Unit]]
+  def leave(slug: Slug, personId: UUID): F[Either[TeamsError, Unit]]
 }
 
 object Teams {
@@ -51,7 +52,7 @@ object Teams {
       } yield members
     }.value
 
-    override def join(slug: Slug, personId: FUUID): F[Either[TeamsError, Unit]] = {
+    override def join(slug: Slug, personId: UUID): F[Either[TeamsError, Unit]] = {
       for {
         team <- OptionT(teamsRepo.findBySlug(slug)).toRight(TeamNotFound(slug))
         _    <- OptionT(personsRepo.findById(personId)).toRight(PersonNotFound(personId))
@@ -62,7 +63,7 @@ object Teams {
       } yield ()
     }.value
 
-    override def leave(slug: Slug, personId: FUUID): F[Either[TeamsError, Unit]] = {
+    override def leave(slug: Slug, personId: UUID): F[Either[TeamsError, Unit]] = {
       for {
         team <- OptionT(teamsRepo.findBySlug(slug)).toRight(TeamNotFound(slug))
         _    <- OptionT(personsRepo.findById(personId)).toRight(PersonNotFound(personId))

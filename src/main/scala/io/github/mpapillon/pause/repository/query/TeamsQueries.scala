@@ -1,12 +1,11 @@
 package io.github.mpapillon.pause.repository.query
 
 import java.time.LocalDate
+import java.util.UUID
 
 import doobie.implicits._
 import doobie.postgres.implicits._
 import doobie.util.update.Update
-import io.chrisdavenport.fuuid.FUUID
-import io.chrisdavenport.fuuid.doobie.implicits._
 import io.github.mpapillon.pause.model.{Member, Slug, Team}
 
 object TeamsQueries {
@@ -28,11 +27,11 @@ object TeamsQueries {
           INNER JOIN person m ON tm.person_id = m.person_id
           WHERE tm.team_id = $teamId""".query[Member]
 
-  val insertMembers: Update[(Int, FUUID)] =
+  val insertMembers: Update[(Int, UUID)] =
     //language=SQL
-    Update[(Int, FUUID)]("INSERT INTO team_person (team_id, person_id) VALUES (?, ?)")
+    Update[(Int, UUID)]("INSERT INTO team_person (team_id, person_id) VALUES (?, ?)")
 
-  val deleteMembers: Update[(Int, FUUID)] =
+  val deleteMembers: Update[(Int, UUID)] =
     //language=SQL
-    Update[(Int, FUUID)]("DELETE FROM team_person WHERE team_id = ? and person_id = ?")
+    Update[(Int, UUID)]("DELETE FROM team_person WHERE team_id = ? and person_id = ?")
 }

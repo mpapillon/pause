@@ -1,11 +1,11 @@
 package io.github.mpapillon.pause.repository
 
 import java.time.LocalDate
+import java.util.UUID
 
 import cats.effect.Async
 import doobie.util.transactor.Transactor
-import io.chrisdavenport.fuuid.FUUID
-import io.github.mpapillon.pause.model.{Slug, Team, Member}
+import io.github.mpapillon.pause.model.{Member, Slug, Team}
 import io.github.mpapillon.pause.repository.RepositoryError.{Result, handleSqlState}
 import io.github.mpapillon.pause.repository.TeamsRepository.TeamId
 import io.github.mpapillon.pause.repository.query.TeamsQueries
@@ -16,8 +16,8 @@ trait TeamsRepository[F[_]] {
   def findBySlug(slug: Slug): F[Option[Team]]
   def findMembers(teamId: TeamId): F[Vector[Member]]
   def insert(name: String, slug: Slug, creationDate: LocalDate): F[Result[TeamId]]
-  def insertMember(teamId: TeamId, memberId: FUUID): F[Result[Int]]
-  def deleteMember(teamId: TeamId, memberId: FUUID): F[Int]
+  def insertMember(teamId: TeamId, memberId: UUID): F[Result[Int]]
+  def deleteMember(teamId: TeamId, memberId: UUID): F[Int]
 }
 
 object TeamsRepository {
@@ -47,14 +47,14 @@ object TeamsRepository {
         .attemptSomeSqlState(handleSqlState)
         .transact(xa)
 
-    override def insertMember(teamId: TeamId, memberId: FUUID): F[Result[Int]] =
+    override def insertMember(teamId: TeamId, memberId: UUID): F[Result[Int]] =
       TeamsQueries.insertMembers
         .toUpdate0(teamId -> memberId)
         .run
         .attemptSomeSqlState(handleSqlState)
         .transact(xa)
 
-    override def deleteMember(teamId: TeamId, memberId: FUUID): F[Int] =
+    override def deleteMember(teamId: TeamId, memberId: UUID): F[Int] =
       TeamsQueries.deleteMembers.toUpdate0(teamId -> memberId).run.transact(xa)
   }
 

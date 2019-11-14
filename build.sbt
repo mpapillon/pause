@@ -5,7 +5,6 @@ val circeVersion            	= 	"0.11.1"
 val doobieVersion           	= 	"0.7.1"
 val flywayVersion           	= 	"6.0.0"
 val fs2Version              	= 	"1.0.5"
-val fuuidVersion            	= 	"0.2.0"
 val http4sVersion           	= 	"0.20.13"
 val log4catsVersion         	= 	"0.3.0"
 val logbackVersion          	= 	"1.2.3"
@@ -37,10 +36,6 @@ lazy val root = (project in file("."))
       "io.circe"              %% "circe-generic"          % circeVersion,
       "io.circe"              %% "circe-literal"          % circeVersion,
       "io.circe"              %% "circe-jawn"             % circeVersion,
-      "io.chrisdavenport"     %% "fuuid"                  % fuuidVersion,
-      "io.chrisdavenport"     %% "fuuid-http4s"           % fuuidVersion,
-      "io.chrisdavenport"     %% "fuuid-circe"            % fuuidVersion,
-      "io.chrisdavenport"     %% "fuuid-doobie"           % fuuidVersion,
       "io.chrisdavenport"     %% "cats-effect-time"       % catsEffectTimeVersion,
       "com.github.pureconfig" %% "pureconfig"             % pureconfigVersion,
       "com.github.pureconfig" %% "pureconfig-http4s"      % pureconfigVersion,
@@ -51,8 +46,7 @@ lazy val root = (project in file("."))
       "org.scalamock"         %% "scalamock"              % scalaMockVersion % "test",
       "ch.qos.logback"        % "logback-classic"         % logbackVersion,
       "org.flywaydb"          % "flyway-core"             % flywayVersion
-    ),
-    addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.0")
+    )
   )
 
 logBuffered in Test := false

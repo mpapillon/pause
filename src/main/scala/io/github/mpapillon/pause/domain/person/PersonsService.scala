@@ -1,14 +1,11 @@
 package io.github.mpapillon.pause.domain.person
 
-import cats.data.{EitherT, OptionT}
+import cats.data.OptionT
 import cats.effect.Sync
 import cats.implicits._
-import io.chrisdavenport.fuuid.FUUID
-import io.chrisdavenport.fuuid.http4s.FUUIDVar
 import io.circe._
 import io.circe.generic.semiauto._
 import io.circe.syntax._
-import io.github.mpapillon.pause.model.Person
 import io.github.mpapillon.pause.syntax.response._
 import org.http4s.circe.CirceEntityDecoder._
 import org.http4s.circe._
@@ -39,20 +36,18 @@ object PersonsService {
         } yield resp
 
       case req @ POST -> Root =>
-        for {
-          MemberCreation(firstName, lastName, email) <- req.as[MemberCreation]
+        req.as[MemberCreation].flatMap { mbrCr =>
+          members
+            .add(mbrCr.firstName, mbrCr.lastName, mbrCr.email)
+            .toResponse(member => Created(member.asJson))
+        }
 
-          id     <- FUUID.randomFUUID
-          member = Person(id, firstName, lastName, email)
-          resp   <- EitherT(members.add(member)).toResponse(_ => Created(member.asJson))
-        } yield resp
-
-      case GET -> Root / FUUIDVar(id) =>
+      case GET -> Root / UUIDVar(id) =>
         OptionT(members.get(id))
           .toRight(PersonsError.PersonNotFound(id))
           .toResponse(member => Ok(member.asJson))
 
-      case DELETE -> Root / FUUIDVar(id) =>
+      case DELETE -> Root / UUIDVar(id) =>
         members.remove(id).map(_ > 0).ifM(Ok(), NotFound())
     }
   }

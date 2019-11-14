@@ -3,7 +3,6 @@ package io.github.mpapillon.pause.domain.team
 import cats.data.OptionT
 import cats.effect.Sync
 import cats.implicits._
-import io.chrisdavenport.fuuid.http4s.FUUIDVar
 import io.circe._
 import io.circe.syntax._
 import io.github.mpapillon.pause.http4s.SlugVar
@@ -57,10 +56,10 @@ object TeamsService {
       case GET -> Root / SlugVar(slug) / "members" =>
         teams.membersOf(slug).toResponse(members => Ok(members.asJson))
 
-      case PUT -> Root / SlugVar(slug) / "members" / FUUIDVar(memberId) =>
+      case PUT -> Root / SlugVar(slug) / "members" / UUIDVar(memberId) =>
         teams.join(slug, memberId).toResponse(_ => Created())
 
-      case DELETE -> Root / SlugVar(slug) / "members" / FUUIDVar(memberId) =>
+      case DELETE -> Root / SlugVar(slug) / "members" / UUIDVar(memberId) =>
         teams.leave(slug, memberId).toResponse(_ => Ok())
     }
   }
